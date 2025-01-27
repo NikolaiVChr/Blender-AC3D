@@ -7,6 +7,7 @@ It's a few python scripts to import/export Inivis AC3D data into and out of Blen
 
 | Blender Version                                                                                         | 
 |---------------------------------------------------------------------------------------------------------|
+| [Download for Blender 4.3](https://github.com/NikolaiVChr/Blender-AC3D/archive/refs/heads/4.3.zip)      |
 | [Download for Blender 4.1](https://github.com/NikolaiVChr/Blender-AC3D/archive/refs/heads/4.1.zip)      |
 | [Download for Blender 4.0](https://github.com/NikolaiVChr/Blender-AC3D/archive/refs/heads/4.0.zip)      |
 | [Download for Blender 3.2](https://github.com/NikolaiVChr/Blender-AC3D/archive/refs/heads/3.2.zip)      | 
