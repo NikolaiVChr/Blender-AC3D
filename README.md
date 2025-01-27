@@ -46,7 +46,7 @@ In latest Blender versions mirror color is white per default, and that confused 
 
 ## Follow the discussion at:
 
-http://www.flightgear.org/forums/viewtopic.php?f=18&t=13442
+https://forum.flightgear.org/viewtopic.php?f=18&t=13442
 
 ## Complete file format specification, anno 2017
 
