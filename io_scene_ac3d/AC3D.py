@@ -797,15 +797,12 @@ class Material:
                 rough = 1-bl_mat.roughness
                 self.rgb = bl_mat.diffuse_color
                 self.trans = 1.0-bl_mat.diffuse_color[3]
-            
-            print( 'Material '+bl_mat.name+' is not using nodes, Emission not exported' )
+                print( 'Material '+bl_mat.name+' is not using nodes, Emission not exported' )
 
             print(export_config.amb_as_diff)   
             if export_config.amb_as_diff:
-                print("Diff")
                 self.amb = self.rgb
             else:
-                print("Amb")
                 self.amb = export_config.ambient
                 
             acMin = 0.0
