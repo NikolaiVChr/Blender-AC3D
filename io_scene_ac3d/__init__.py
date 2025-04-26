@@ -318,7 +318,7 @@ class AC3D_OT_Export(Operator, ExportHelper):
         description="Ambient color",
         subtype="COLOR",
         unit="NONE",
-        default=(0.2, 0.2, 0.2),
+        default=(0.5, 0.5, 0.5),
         max=1.0,
         min=0.0,
     )
