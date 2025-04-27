@@ -126,7 +126,7 @@ class AC3D_OT_Import(Operator, ImportHelper):
 #            "transparency for materials is then only seen in Material "
 #            "view and Render view)"),
 #        default=False)
-        
+
 #    useEeveeSpecular: BoolProperty(
 #        name="Use Eevee Specular",
 #        description="Set materials to use Eevee Specular instead of Principled BSDF",
@@ -379,26 +379,24 @@ class AC3D_OT_Export(Operator, ExportHelper):
         return {'FINISHED'}
 
 
-__classes__ = (
+classes = (
     AC3D_OT_Export,
     AC3D_OT_Import,
     AC3D_OT_Message,
-    AC3D_OT_Ok)
-
+    AC3D_OT_Ok
+)
 
 def register():
-    for c in __classes__:
-        bpy.utils.register_class(c)
+    for cls in classes:
+        bpy.utils.register_class(cls)
     TOPBAR_MT_file_export.append(menu_func_export)
     TOPBAR_MT_file_import.append(menu_func_import)
 
-
 def unregister():
-    for c in reversed(__classes__):
-        bpy.utils.unregister_class(c)
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
     TOPBAR_MT_file_export.remove(menu_func_export)
     TOPBAR_MT_file_import.remove(menu_func_import)
-
 
 if __name__ == "__main__":
     register()
