@@ -74,22 +74,27 @@ class AcMat:
     def __init__(self, name, rgb, amb, emis, spec, shi, trans, import_config):
         if name == "":
             name = "Default"
-        self.name = re.sub('["]', '', name)  # string
-        self.rgb = rgb				# [R,G,B]
-        self.amb = amb				# [R,G,B]
-        self.emis = emis			# [R,G,B]
-        self.spec = spec			# [R,G,B]
-        self.shi = shi				# integer
-        self.trans = trans			# float
+        self.name = re.sub('["]', "", name)  # string
+        self.rgb = rgb  # [R,G,B]
+        self.amb = amb  # [R,G,B]
+        self.emis = emis  # [R,G,B]
+        self.spec = spec  # [R,G,B]
+        self.shi = shi  # integer
+        self.trans = trans  # float
 
-        self.rgba = [self.rgb[0], self.rgb[1], self.rgb[2], 1.0-self.trans]#used for non-nodes
-        self.rgb4 = [self.rgb[0], self.rgb[1], self.rgb[2], 1.0]#used for nodes
+        self.rgba = [
+            self.rgb[0],
+            self.rgb[1],
+            self.rgb[2],
+            1.0 - self.trans,
+        ]  # used for non-nodes
+        self.rgb4 = [self.rgb[0], self.rgb[1], self.rgb[2], 1.0]  # used for nodes
         self.emis4 = [self.emis[0], self.emis[1], self.emis[2], 1.0]
         self.spec4 = [self.spec[0], self.spec[1], self.spec[2], 1.0]
 
-        self.bmat_keys = {}			# dictionary list of blender materials
+        self.bmat_keys = {}  # dictionary list of blender materials
         self.bmat_keys.setdefault(None)
-        self.bl_material = None		# untextured material
+        self.bl_material = None  # untextured material
         self.import_config = import_config
 
     def make_blender_mat(self, bl_mat):
@@ -116,8 +121,6 @@ class AcMat:
         #
         # bl_mat.specular_shader = 'PHONG' changed in 2.80
 
-        
-
         # bl_mat.diffuse_intensity = 1.0 not supported by 2.80
         # bl_mat.ambient = \  not supported in 2.80
         #   (self.amb[0] + self.amb[1] + self.amb[2]) / 3.0
@@ -127,37 +130,34 @@ class AcMat:
         #   ((self.emis[0] + self.emis[1] + self.emis[2]) / 3.0) * 2
         # if self.import_config.use_emis_as_mircol:
         # 		bl_mat.mirror_color = self.emis
-        #bl_mat.specular_color = self.spec # although this can be set, it does not do anything, at least not with bsfd..
-        
+        # bl_mat.specular_color = self.spec # although this can be set, it does not do anything, at least not with bsfd..
 
-        
-				
         acMin = 0.0
         acMax = 128.0
         blMin = 0.0
         blMax = 1.0
 
-        acRange = (acMax - acMin)
-        blRange = (blMax - blMin)
+        acRange = acMax - acMin
+        blRange = blMax - blMin
         rough = (((float(self.shi) - acMin) * blRange) / acRange) + blMin
-        
-        #bsdf.inputs['Roughness'].default_value = 1-rough
-        
+
+        # bsdf.inputs['Roughness'].default_value = 1-rough
+
         # Set the basic non-nodes material properties
-        bl_mat.roughness = 1-rough
+        bl_mat.roughness = 1 - rough
         bl_mat.diffuse_color = self.rgba
-        bl_mat.specular_intensity = sum(self.spec)/3.0
-        
+        bl_mat.specular_intensity = sum(self.spec) / 3.0
+
         bl_mat.use_nodes = True
-        bsdf = bl_mat.node_tree.nodes[bpy.app.translations.pgettext('Principled BSDF')]
-        bsdf.inputs['Emission Color'].default_value = self.emis4
-        bsdf.inputs['Emission Strength'].default_value = 1.0
-        bsdf.inputs['Alpha'].default_value = 1.0 - self.trans
-        bsdf.inputs['Base Color'].default_value = self.rgb4
-        bsdf.inputs['Specular Tint'].default_value = self.spec4
-        #bsdf.inputs['IOR'].default_value = 1.0
-        #bsdf.inputs['Transmission'].default_value = 1.0
-        
+        bsdf = bl_mat.node_tree.nodes[bpy.app.translations.pgettext("Principled BSDF")]
+        bsdf.inputs["Emission Color"].default_value = self.emis4
+        bsdf.inputs["Emission Strength"].default_value = 1.0
+        bsdf.inputs["Alpha"].default_value = 1.0 - self.trans
+        bsdf.inputs["Base Color"].default_value = self.rgb4
+        bsdf.inputs["Specular Tint"].default_value = self.spec4
+        # bsdf.inputs['IOR'].default_value = 1.0
+        # bsdf.inputs['Transmission'].default_value = 1.0
+
         return bl_mat
 
     """
@@ -165,11 +165,11 @@ class AcMat:
     adds it when it doesn't exist
     """
 
-    def get_blender_material(self, texrep, tex_name=''):
+    def get_blender_material(self, texrep, tex_name=""):
         bl_mat = None
         # tex_slot = None
 
-        if tex_name == '':
+        if tex_name == "":
             bl_mat = self.bl_material
             if bl_mat is None:
                 bl_mat = bpy.data.materials.new(self.name)
@@ -177,23 +177,28 @@ class AcMat:
 
                 self.bl_material = bl_mat
         else:
-            if (tex_name+str(texrep[0])+'-'+str(texrep[1])) in self.bmat_keys:
-                bl_mat = self.bmat_keys[tex_name +
-                                        str(texrep[0])+'-'+str(texrep[1])]
+            if (tex_name + str(texrep[0]) + "-" + str(texrep[1])) in self.bmat_keys:
+                bl_mat = self.bmat_keys[
+                    tex_name + str(texrep[0]) + "-" + str(texrep[1])
+                ]
             else:
                 bl_mat = bpy.data.materials.new(self.name)
                 bl_mat = self.make_blender_mat(bl_mat)
 
                 bsdf = None
-                bsdf = bl_mat.node_tree.nodes[bpy.app.translations.pgettext("Principled BSDF")]
-                    
-                texImage = bl_mat.node_tree.nodes.new('ShaderNodeTexImage')
+                bsdf = bl_mat.node_tree.nodes[
+                    bpy.app.translations.pgettext("Principled BSDF")
+                ]
+
+                texImage = bl_mat.node_tree.nodes.new("ShaderNodeTexImage")
                 texImage.image = self.get_blender_image(tex_name)
                 bl_mat.node_tree.links.new(
-                    bsdf.inputs['Base Color'], texImage.outputs['Color'])
+                    bsdf.inputs["Base Color"], texImage.outputs["Color"]
+                )
 
-                self.bmat_keys[tex_name +
-                               str(texrep[0])+'-'+str(texrep[1])] = bl_mat
+                self.bmat_keys[tex_name + str(texrep[0]) + "-" + str(texrep[1])] = (
+                    bl_mat
+                )
 
         return bl_mat
 
@@ -211,26 +216,30 @@ class AcMat:
         found = False
         base_name = bpy.path.basename(tex_name)
 
-        for path in [tex_name,
-                     os.path.join(self.import_config.importdir, tex_name),
-                     os.path.join(self.import_config.importdir, base_name)]:
+        for path in [
+            tex_name,
+            os.path.join(self.import_config.importdir, tex_name),
+            os.path.join(self.import_config.importdir, base_name),
+        ]:
             if os.path.exists(path):
                 found = True
 
                 try:
-                    bl_image = bpy.data.images.load(
-                        path, check_existing=True)
+                    bl_image = bpy.data.images.load(path, check_existing=True)
                 except Exception:
                     if bl_image is None:
-                        TRACE("Failed to load texture: "
-                              "{0}".format(tex_name))
+                        TRACE("Failed to load texture: {0}".format(tex_name))
 
         if not found:
             TRACE("Failed to locate texture: {0}".format(tex_name))
             self.import_config.operator.report(
-                {'WARNING'},
-                'AC3D Importer: Failed to locate texture: "' +
-                tex_name + '" in material "' + self.name + '".')
+                {"WARNING"},
+                'AC3D Importer: Failed to locate texture: "'
+                + tex_name
+                + '" in material "'
+                + self.name
+                + '".',
+            )
 
         return bl_image
 
@@ -245,7 +254,7 @@ class AcMat:
         if tex_name in bpy.data.textures:
             bl_tex = bpy.data.textures[tex_name]
         else:
-            bl_tex = bpy.data.textures.new(tex_name, 'IMAGE')
+            bl_tex = bpy.data.textures.new(tex_name, "IMAGE")
             bl_tex.image = self.get_blender_image(tex_name)
             bl_tex.use_preview_alpha = True
 
@@ -256,57 +265,57 @@ class AcObj:
     """Container class for a .ac OBJECT."""
 
     def __init__(self, ob_type, ac_file, import_config, world, parent=None):
-        self.type = ob_type			# Type of object
+        self.type = ob_type  # Type of object
         # reference to the parent object (if the object is World, then this
         # should be None)
         self.ac_parent = parent
-        self.name = ''				# name of the object
-        self.data = ''				# custom data
-        self.tex_name = ''			# texture name (filename of texture)
-        self.texrep = [1, 1]			# texture repeat
-        self.texoff = [0, 0]			# texture offset
-        self.subdiv = 0             # subdivision modifier
+        self.name = ""  # name of the object
+        self.data = ""  # custom data
+        self.tex_name = ""  # texture name (filename of texture)
+        self.texrep = [1, 1]  # texture repeat
+        self.texoff = [0, 0]  # texture offset
+        self.subdiv = 0  # subdivision modifier
         # translation location of the center relative to the parent object
         self.location = [0, 0, 0]
         # 3x3 rotational matrix for vertices
         self.rotation = mathutils.Matrix(([1, 0, 0], [0, 1, 0], [0, 0, 1]))
-        self.url = ''				# url of the object (??!)
+        self.url = ""  # url of the object (??!)
         # crease angle for smoothing, 61 degs was chosen since that is what
         # OSG uses as default
         self.crease = 61
-        self.use_crease = False     # if crease was specified in the AC3D file
-        self.vert_list = []			# list of Vector(X,Y,Z) objects
-        self.surf_list = []			# list of attached surfaces
-        self.face_list = []			# flattened surface list
-        self.surf_face_list = []    # list of surfs that is faces, no edges
-        self.edge_list = []			# spare edge list (handles poly lines etc)
-        self.face_mat_list = []		# flattened surface material index list
+        self.use_crease = False  # if crease was specified in the AC3D file
+        self.vert_list = []  # list of Vector(X,Y,Z) objects
+        self.surf_list = []  # list of attached surfaces
+        self.face_list = []  # flattened surface list
+        self.surf_face_list = []  # list of surfs that is faces, no edges
+        self.edge_list = []  # spare edge list (handles poly lines etc)
+        self.face_mat_list = []  # flattened surface material index list
         self.children = []
         # Dictionary of ac_material index/texture pair to blender mesh
         # material index
         self.bl_mat_dict = {}
         self.world = world
-        self.bl_obj = None			# Blender object
+        self.bl_obj = None  # Blender object
         self.import_config = import_config
         self.hidden = False
 
         self.tokens = {
-            'numvert':	self.read_vertices,
-            'numsurf':	self.read_surfaces,
-            'name':		self.read_name,
-            'data':		self.read_data,
-            'kids':		self.read_children,
-            'loc':		self.read_location,
-            'rot':		self.read_rotation,
-            'texture':	self.read_texture,
-            'texrep':	self.read_texrep,
-            'texoff':	self.read_texoff,
-            'subdiv':	self.read_subdiv,
-            'crease':	self.read_crease,
-            'folded':	self.read_hierarchy_state,
-            'locked':	self.read_hierarchy_state,
-            'hidden':	self.read_hierarchy_state,
-            'url':      self.read_url
+            "numvert": self.read_vertices,
+            "numsurf": self.read_surfaces,
+            "name": self.read_name,
+            "data": self.read_data,
+            "kids": self.read_children,
+            "loc": self.read_location,
+            "rot": self.read_rotation,
+            "texture": self.read_texture,
+            "texrep": self.read_texrep,
+            "texoff": self.read_texoff,
+            "subdiv": self.read_subdiv,
+            "crease": self.read_crease,
+            "folded": self.read_hierarchy_state,
+            "locked": self.read_hierarchy_state,
+            "hidden": self.read_hierarchy_state,
+            "url": self.read_url,
         }
 
         self.read_ac_object(ac_file)
@@ -348,14 +357,12 @@ class AcObj:
             if line is None:
                 break
             line = line.strip().split()
-            if line[0] == 'SURF':
+            if line[0] == "SURF":
                 surf = AcSurf(line[1], ac_file, self.import_config, self.world)
-                if(surf.flags.type != 0 or len(surf.refs) > 2):
+                if surf.flags.type != 0 or len(surf.refs) > 2:
                     self.surf_list.append(surf)
                 else:
-                    TRACE(
-                        "Ignoring surface (vertex-count: {0})".format(
-                            len(surf.refs)))
+                    TRACE("Ignoring surface (vertex-count: {0})".format(len(surf.refs)))
 
     def read_name(self, ac_file, toks):
         self.name = toks[1].strip('"')
@@ -367,9 +374,9 @@ class AcObj:
         # Data can be multiline, so keep reading lines until all data is read,
         # but only use data in first line
         self.data = line[:chars]
-        count = len(line)+1  # +1 is for newline char
-        while (chars > count):
-            count += len(self.world.readLine(ac_file))+1
+        count = len(line) + 1  # +1 is for newline char
+        while chars > count:
+            count += len(self.world.readLine(ac_file)) + 1
         return False
 
     def read_hierarchy_state(self, ac_file, toks):
@@ -388,12 +395,17 @@ class AcObj:
         return False
 
     def read_location(self, ac_file, toks):
-        self.location = (Vector([float(x) for x in toks[1:4]]))
+        self.location = Vector([float(x) for x in toks[1:4]])
         return False
 
     def read_rotation(self, ac_file, toks):
-        temp = mathutils.Matrix(([float(x) for x in toks[1:4]], [float(
-            x) for x in toks[4:7]], [float(x) for x in toks[7:10]]))
+        temp = mathutils.Matrix(
+            (
+                [float(x) for x in toks[1:4]],
+                [float(x) for x in toks[4:7]],
+                [float(x) for x in toks[7:10]],
+            )
+        )
         rearranged = mathutils.Matrix().to_3x3()
         rearranged[0][0] = temp[0][0]
         rearranged[1][0] = temp[0][1]
@@ -430,14 +442,13 @@ class AcObj:
         return False
 
     def read_children(self, ac_file, toks):
-        if self.type.lower() == 'world':
+        if self.type.lower() == "world":
             # since children are always last thing read, we have to apply the
             # world rotation and location here, cause the global_matrix is
             # applied when making the children of world/scene.
             self4 = self.rotation.to_4x4()
             # self3 = mathutils.Matrix.Translation(self.location)
-            self.import_config.global_matrix = \
-                self4 @ self.import_config.global_matrix
+            self.import_config.global_matrix = self4 @ self.import_config.global_matrix
             self.import_config.global_matrix[0][3] = self.location[0]
             self.import_config.global_matrix[1][3] = self.location[1]
             self.import_config.global_matrix[2][3] = self.location[2]
@@ -450,8 +461,14 @@ class AcObj:
             line = line.strip().split()
             if len(line) > 1:
                 self.children.append(
-                    AcObj(line[1].strip('"'), ac_file,
-                          self.import_config, self.world, self))
+                    AcObj(
+                        line[1].strip('"'),
+                        ac_file,
+                        self.import_config,
+                        self.world,
+                        self,
+                    )
+                )
             else:
                 self.readPrevious = True
                 break
@@ -464,38 +481,36 @@ class AcObj:
     configures it correctly
     """
 
-    def create_blender_object(self, ac_matlist, str_pre,
-                              bLevelLinked, mainSelf):
+    def create_blender_object(self, ac_matlist, str_pre, bLevelLinked, mainSelf):
         me = None
         type_name = self.type.lower()
 
-        if type_name == 'world':
+        if type_name == "world":
             self.name = self.import_config.ac_name
 
-        elif type_name == 'group':
+        elif type_name == "group":
             # Create an empty object
-            bpy.ops.object.empty_add(type='PLAIN_AXES', radius=.01)
+            bpy.ops.object.empty_add(type="PLAIN_AXES", radius=0.01)
             self.bl_obj = bpy.context.active_object
             self.bl_obj.name = self.name
 
-        elif type_name == 'poly':
+        elif type_name == "poly":
             meshname = self.name + ".mesh"
             if len(self.data) > 0:
                 meshname = self.data
             me = bpy.data.meshes.new(meshname)
             self.bl_obj = bpy.data.objects.new(self.name, me)
 
-        elif type_name == 'light':
+        elif type_name == "light":
             # Create an light object
             lampname = self.name + ".lamp"
             if len(self.data) > 0:
                 lampname = self.data
 
-            lamp_data = bpy.data.lights.new(name=lampname, type='POINT')
+            lamp_data = bpy.data.lights.new(name=lampname, type="POINT")
             lamp_data.energy = 200
 
-            self.bl_obj = bpy.data.objects.new(name=self.name,
-                                               object_data=lamp_data)
+            self.bl_obj = bpy.data.objects.new(name=self.name, object_data=lamp_data)
 
         # setup parent object
         if self.bl_obj:
@@ -527,7 +542,9 @@ class AcObj:
                         # in a poly-line)
                         TRACE(
                             "Ignoring surface (vertex-count: {0})".format(
-                                len(surf.refs)))
+                                len(surf.refs)
+                            )
+                        )
                     else:
                         # If one surface is twosided, they all will be...
                         two_sided_lighting |= surf.flags.two_sided
@@ -541,11 +558,15 @@ class AcObj:
                         # built is 0-based
                         ac_material = ac_matlist[surf.mat_index]
                         bl_material = ac_material.get_blender_material(
-                            self.texrep, self.tex_name)
+                            self.texrep, self.tex_name
+                        )
 
                         if bl_material is None:
-                            TRACE("Error getting material {0} '{1}'".format(
-                                surf.mat_index, self.tex_name))
+                            TRACE(
+                                "Error getting material {0} '{1}'".format(
+                                    surf.mat_index, self.tex_name
+                                )
+                            )
 
                         fm_index = 0
                         if bl_material.name not in me.materials:
@@ -567,11 +588,15 @@ class AcObj:
                     # Material index is 1 based, the list we built is 0 based
                     ac_material = ac_matlist[surf.mat_index]
                     bl_material = ac_material.get_blender_material(
-                        self.texrep, self.tex_name)
+                        self.texrep, self.tex_name
+                    )
 
                     if bl_material is None:
-                        TRACE("Error getting material {0} '{1}'".format(
-                            surf.mat_index, self.tex_name))
+                        TRACE(
+                            "Error getting material {0} '{1}'".format(
+                                surf.mat_index, self.tex_name
+                            )
+                        )
 
                     if bl_material.name not in me.materials:
                         # we here add the lines material to the object, but
@@ -644,16 +669,19 @@ class AcObj:
 
                 if len(self.tex_name) and len(surf.uv_refs) >= 3:
                     for _i_uv, uv in enumerate(surf.uv_refs):
-                        uv_layer.data[uv_layer_index].uv = [uv[0]*self.texrep[0]+self.texoff[0], uv[1]*self.texrep[1]+self.texoff[1]]
+                        uv_layer.data[uv_layer_index].uv = [
+                            uv[0] * self.texrep[0] + self.texoff[0],
+                            uv[1] * self.texrep[1] + self.texoff[1],
+                        ]
                         uv_layer_index += 1
 
-            #me.show_double_sided = two_sided_lighting#at least 1 face in this mesh is double sided, so we make whole mesh double sided.
+            # me.show_double_sided = two_sided_lighting#at least 1 face in this mesh is double sided, so we make whole mesh double sided.
             self.bl_obj.show_transparent = True
 
             # apply subdivision modifier
             if self.subdiv != 0:
                 subName = self.name + ".subdiv"
-                self.bl_obj.modifiers.new(name=subName, type='SUBSURF')
+                self.bl_obj.modifiers.new(name=subName, type="SUBSURF")
 
                 modifier = self.bl_obj.modifiers[subName]
                 modifier.levels = self.subdiv
@@ -668,7 +696,7 @@ class AcObj:
             self4 = self.rotation.to_4x4()
             self.bl_obj.matrix_basis = self3 @ self4
 
-            if self.ac_parent and self.ac_parent.type.lower() == 'world':
+            if self.ac_parent and self.ac_parent.type.lower() == "world":
                 matrix_basis = self.bl_obj.matrix_basis
                 # order of this multiplication matters
                 matrix_basis = self.import_config.global_matrix @ matrix_basis
@@ -694,7 +722,7 @@ class AcObj:
             if not container.objects.get(self.bl_obj.name):
                 container.objects.link(self.bl_obj)
 
-            bpy.ops.object.select_all(action='DESELECT')
+            bpy.ops.object.select_all(action="DESELECT")
             self.bl_obj.select_set(True)
             # bpy.ops.object.origin_set('ORIGIN_GEOMETRY', 'MEDIAN')
 
@@ -713,11 +741,12 @@ class AcObj:
             else:
                 str_pre_new = str_pre + "  "
 
-            if self.children.index(obj) == len(self.children)-1:
+            if self.children.index(obj) == len(self.children) - 1:
                 bUseLink = False
 
             child = obj.create_blender_object(
-                ac_matlist, str_pre_new, bUseLink, mainSelf)
+                ac_matlist, str_pre_new, bUseLink, mainSelf
+            )
             if child and len(child) == 1:
                 children.append(child[0])
 
@@ -738,7 +767,7 @@ class AcObj:
 class AcSurf:
     class AcSurfFlags:
         def __init__(self, flags):
-            self.type = 0		# Surface Type: 0=Polygon, 1=closedLine, 2=Line
+            self.type = 0  # Surface Type: 0=Polygon, 1=closedLine, 2=Line
             self.shaded = False
             self.two_sided = False
             i = int(flags, 16)
@@ -755,15 +784,15 @@ class AcSurf:
     """
 
     def __init__(self, flags, ac_file, import_config, world):
-        self.flags = self.AcSurfFlags(flags)    # surface flags
-        self.mat_index = 0   # default material
+        self.flags = self.AcSurfFlags(flags)  # surface flags
+        self.mat_index = 0  # default material
         # list of indexes into the parent objects defined vertexes with
         # defined UV coordinates
         self.refs = []
         self.uv_refs = []
         self.tokens = {
-            'mat':	self.read_surf_material,
-            'refs':	self.read_surf_refs,
+            "mat": self.read_surf_material,
+            "refs": self.read_surf_refs,
         }
 
         self.import_config = import_config
@@ -821,40 +850,39 @@ class AcSurf:
                 surf_edges.append(mainline)
             else:
                 # its a line
-                for i in range(0, len(self.refs)-1):
-                    lineSegment = [self.refs[i], self.refs[i+1]]
+                for i in range(0, len(self.refs) - 1):
+                    lineSegment = [self.refs[i], self.refs[i + 1]]
                     surf_edges.append(lineSegment)
                 if self.flags.type == 1 and len(self.refs) > 2:
                     # closed poly-line with more than 1 segment
-                    surf_edges.append(
-                        [self.refs[len(self.refs)-1], self.refs[0]])
+                    surf_edges.append([self.refs[len(self.refs) - 1], self.refs[0]])
         return surf_edges
 
 
 class ImportConf:
     def __init__(
-            self,
-            operator,
-            context,
-            filepath,
-            global_matrix,
-            transparency_method,
-            use_emis_as_mircol,
-            use_amb_as_mircol,
-            display_textured_solid,
-            parent_to,
-            collection_name):
-
+        self,
+        operator,
+        context,
+        filepath,
+        global_matrix,
+        transparency_method,
+        use_emis_as_mircol,
+        use_amb_as_mircol,
+        display_textured_solid,
+        parent_to,
+        collection_name,
+    ):
         # Stuff that needs to be available to the working classes (ha!)
         self.operator = operator
         self.context = context
         self.global_matrix = global_matrix
-#        self.use_transparency = use_transparency
+        #        self.use_transparency = use_transparency
         self.transparency_method = transparency_method
         self.use_emis_as_mircol = use_emis_as_mircol
         self.use_amb_as_mircol = use_amb_as_mircol
         self.display_textured_solid = display_textured_solid
-#        self.hide_hidden_objects = hide_hidden_objects
+        #        self.hide_hidden_objects = hide_hidden_objects
         self.parent_to = parent_to
         self.collection_name = collection_name
 
@@ -866,19 +894,19 @@ class ImportConf:
 
 class AC3D_OT_Import:
     def __init__(
-            self,
-            operator,
-            context,
-            filepath="",
-            use_image_search=False,
-            global_matrix=None,
-            transparency_method='Z_TRANSPARENCY',
-            use_emis_as_mircol=False,
-            use_amb_as_mircol=False,
-            display_textured_solid=False,
-            parent_to="",
-            collection_name=""):
-
+        self,
+        operator,
+        context,
+        filepath="",
+        use_image_search=False,
+        global_matrix=None,
+        transparency_method="Z_TRANSPARENCY",
+        use_emis_as_mircol=False,
+        use_amb_as_mircol=False,
+        display_textured_solid=False,
+        parent_to="",
+        collection_name="",
+    ):
         self.import_config = ImportConf(
             operator,
             context,
@@ -889,66 +917,67 @@ class AC3D_OT_Import:
             use_amb_as_mircol,
             display_textured_solid,
             parent_to,
-            collection_name)
+            collection_name,
+        )
 
         self.tokens = {
-            'MATERIAL':		self.read_material,
-            'MAT':			self.read_multiline_material,
-            'OBJECT':		self.read_object,
+            "MATERIAL": self.read_material,
+            "MAT": self.read_multiline_material,
+            "OBJECT": self.read_object,
         }
         self.oblist = []
         self.matlist = []
 
         # last read line of the file, stored incase we have to reread it,
         # due to bad AC file
-        self.lastline = ''
+        self.lastline = ""
 
         # should last line be reread instead of next line
         self.readPrevious = False
 
         self.line_num = 0
 
-        operator.report(
-            {'INFO'}, "Attempting import: {file}".format(file=filepath))
+        operator.report({"INFO"}, "Attempting import: {file}".format(file=filepath))
 
         # Check to make sure we're working with a valid AC3D file
-        ac_file = open(filepath, 'r')
+        ac_file = open(filepath, "r")
 
         condition = True
         while condition:
             self.header = ac_file.readline()
             if not self.header:
-                self.header = ''
+                self.header = ""
                 break
-            if self.header != '':
+            if self.header != "":
                 condition = False
 
         self.header = self.header.strip()
         if len(self.header) != 5:
             operator.report(
-                {'ERROR'},
+                {"ERROR"},
                 "Invalid file header length {0}: '{1}'".format(
-                    len(self.header), self.header))
+                    len(self.header), self.header
+                ),
+            )
             ac_file.close()
             return None
 
         # pull out the AC3D file header
         AC3D_header = self.header[:4]
         AC3D_ver = self.header[4:5]
-        if AC3D_header != 'AC3D':
-            operator.report(
-                {'ERROR'}, "Invalid file header: {0}".format(self.header))
+        if AC3D_header != "AC3D":
+            operator.report({"ERROR"}, "Invalid file header: {0}".format(self.header))
             ac_file.close()
             return None
 
-        if AC3D_ver == 'b':
+        if AC3D_ver == "b":
             print("AC3D file is version 'b'")
-        elif AC3D_ver == 'c':
+        elif AC3D_ver == "c":
             print("AC3D file is version 'c'")
         else:
             operator.report(
-                {'ERROR'},
-                "Unsupported AC3D version: {0}".format(self.header))
+                {"ERROR"}, "Unsupported AC3D version: {0}".format(self.header)
+            )
             ac_file.close()
             return None
 
@@ -959,22 +988,22 @@ class AC3D_OT_Import:
 
         # Display as either textured solid (transparency only works in one
         # direction) or as textureless solids (transparency works)
-        layout = bpy.data.screens['Layout']
+        layout = bpy.data.screens["Layout"]
 
         for bl_area in layout.areas:
             for bl_space in bl_area.spaces:
-                if bl_space.type == 'VIEW_3D':
+                if bl_space.type == "VIEW_3D":
                     bl_space.overlay.show_relationship_lines = False
-                    bl_space.shading.light = 'STUDIO'
-                    bl_space.shading.color_type = 'TEXTURE'
-                    bl_space.shading.background_type = 'THEME'
+                    bl_space.shading.light = "STUDIO"
+                    bl_space.shading.color_type = "TEXTURE"
+                    bl_space.shading.background_type = "THEME"
                     try:
-                        bl_space.shading.studio_light = "outdoor.sl" # will gives exception sometimes when loading into a scene with prior models present
+                        bl_space.shading.studio_light = "outdoor.sl"  # will gives exception sometimes when loading into a scene with prior models present
                     except:
                         print("Outdoor.sl failed to be applied")
                     # enable these 2 lines to use the scene lights to illuminate the scene in Dev Look
-                    #bl_space.shading.use_scene_lights = True
-                    #bl_space.shading.use_scene_World = True
+                    # bl_space.shading.use_scene_lights = True
+                    # bl_space.shading.use_scene_World = True
                     break
 
         return None
@@ -1014,7 +1043,7 @@ class AC3D_OT_Import:
 
     def report_error(self, message):
         TRACE(message)
-        self.import_config.operator.report({'ERROR'}, message)
+        self.import_config.operator.report({"ERROR"}, message)
 
     """
     read our validated .ac file
@@ -1035,20 +1064,18 @@ class AC3D_OT_Import:
                         self.tokens[line[0]](ac_file, line)
                     else:
                         self.report_error(
-                            "invalid token: {tok} ({ln})".format(tok=line[0],
-                                                                 ln=line))
+                            "invalid token: {tok} ({ln})".format(tok=line[0], ln=line)
+                        )
                 else:
                     condition = False
         except Exception as e:
-            self.report_error('AC3D import error, line %d: %s' %
-                              (self.line_num, e))
+            self.report_error("AC3D import error, line %d: %s" % (self.line_num, e))
 
     """
     Take the passed in line and interpret as a .ac material
     """
 
     def read_material(self, ac_file, line):
-
         # MATERIAL %s rgb  %f %f %f  amb   %f %f %f
         #             emis %f %f %f  spec  %f %f %f
         #             shi  %d        trans %f
@@ -1062,7 +1089,9 @@ class AC3D_OT_Import:
                 # it should be int but float seems to be used sometimes
                 float(line[19]),
                 float(line[21]),
-                self.import_config))
+                self.import_config,
+            )
+        )
 
     def read_mat_line(self, ac_file):
         line = self.readLine(ac_file)
@@ -1089,50 +1118,43 @@ class AC3D_OT_Import:
         # dataContent
         # ENDMAT
         if len(line) != 2:
-            self.report_error(
-                "invalid material name on line ({ln})".format(ln=line))
+            self.report_error("invalid material name on line ({ln})".format(ln=line))
         name = line[1]
         line = self.read_mat_line(ac_file)
-        if line[0] != 'rgb' or len(line) != 4:
-            self.report_error(
-                "invalid material rgb on line ({ln})".format(ln=line))
+        if line[0] != "rgb" or len(line) != 4:
+            self.report_error("invalid material rgb on line ({ln})".format(ln=line))
         rgb = [float(x) for x in line[1:4]]
         line = self.read_mat_line(ac_file)
-        if line[0] != 'amb' or len(line) != 4:
-            self.report_error(
-                "invalid material amb on line ({ln})".format(ln=line))
+        if line[0] != "amb" or len(line) != 4:
+            self.report_error("invalid material amb on line ({ln})".format(ln=line))
         amb = [float(x) for x in line[1:4]]
         line = self.read_mat_line(ac_file)
-        if line[0] != 'emis' or len(line) != 4:
-            self.report_error(
-                "invalid material emis on line ({ln})".format(ln=line))
+        if line[0] != "emis" or len(line) != 4:
+            self.report_error("invalid material emis on line ({ln})".format(ln=line))
         emis = [float(x) for x in line[1:4]]
         line = self.read_mat_line(ac_file)
-        if line[0] != 'spec' or len(line) != 4:
-            self.report_error(
-                "invalid material spec on line ({ln})".format(ln=line))
+        if line[0] != "spec" or len(line) != 4:
+            self.report_error("invalid material spec on line ({ln})".format(ln=line))
         spec = [float(x) for x in line[1:4]]
         line = self.read_mat_line(ac_file)
-        if line[0] != 'shi' or len(line) != 2:
-            self.report_error(
-                "invalid material shi on line ({ln})".format(ln=line))
+        if line[0] != "shi" or len(line) != 2:
+            self.report_error("invalid material shi on line ({ln})".format(ln=line))
         # it should be int but float seems to be used sometimes
         shi = float(line[1])
         line = self.read_mat_line(ac_file)
-        if line[0] != 'trans' or len(line) != 2:
-            self.report_error(
-                "invalid material trans on line ({ln})".format(ln=line))
+        if line[0] != "trans" or len(line) != 2:
+            self.report_error("invalid material trans on line ({ln})".format(ln=line))
         trans = float(line[1])
         line = self.read_mat_line(ac_file)
-        if line[0] == 'data':
+        if line[0] == "data":
             line = self.read_mat_line(ac_file)
-            while line is not None and line[0] != 'ENDMAT':
+            while line is not None and line[0] != "ENDMAT":
                 line = self.read_mat_line(ac_file)
-        if line[0] != 'ENDMAT' or len(line) != 1:
-            self.report_error(
-                "invalid material ENDMAT on line ({ln})".format(ln=line))
-        self.matlist.append(AcMat(name, rgb, amb, emis, spec,
-                                  shi, trans, self.import_config))
+        if line[0] != "ENDMAT" or len(line) != 1:
+            self.report_error("invalid material ENDMAT on line ({ln})".format(ln=line))
+        self.matlist.append(
+            AcMat(name, rgb, amb, emis, spec, shi, trans, self.import_config)
+        )
 
     """
     Read the Object definition (including child objects)
@@ -1147,14 +1169,13 @@ class AC3D_OT_Import:
     """
 
     def create_blender_data(self):
-
         self.fullList = []
 
         # go through the list of objects
         bUseLink = True
         top_level_objects = []
         for obj in self.oblist:
-            if self.oblist.index(obj) == len(self.oblist)-1:
+            if self.oblist.index(obj) == len(self.oblist) - 1:
                 bUseLink = False
             tlo = obj.create_blender_object(self.matlist, "", bUseLink, self)
             if len(tlo) > 0:
@@ -1169,7 +1190,8 @@ class AC3D_OT_Import:
                 obj.select_set(True)
                 bpy.context.scene.collection.objects.active = obj
                 bpy.ops.object.transform_apply(
-                    location=False, rotation=False, scale=True)
+                    location=False, rotation=False, scale=True
+                )
 
         for obj in bpy.data.objects:
             obj.select_set(False)

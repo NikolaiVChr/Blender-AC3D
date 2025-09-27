@@ -90,7 +90,7 @@ class ExportConf:
         self.export_hidden = export_hidden
         self.export_rot = export_rot
         self.export_lights = export_lights
-        self.global_doublesided=global_doublesided
+        self.global_doublesided = global_doublesided
         # if any mesh has no material, this will be changed to 0 and
         # DefaultWhite will be output.
         self.mat_offset = 1
@@ -98,7 +98,7 @@ class ExportConf:
         # used to determine relative file paths
         self.exportdir = os.path.dirname(filepath)
         self.ac_name = os.path.split(filepath)[1]
-        TRACE('Exporting to {0}'.format(self.ac_name))
+        TRACE("Exporting to {0}".format(self.ac_name))
 
 
 class AC3D_OT_Export:
@@ -106,7 +106,7 @@ class AC3D_OT_Export:
         self,
         operator,
         context,
-        filepath='',
+        filepath="",
         global_matrix=None,
         export_rot=False,
         use_render_layers=True,
@@ -121,7 +121,6 @@ class AC3D_OT_Export:
         crease_angle=radians(40.0),
         global_doublesided=False,
     ):
-
         self.export_conf = ExportConf(
             operator,
             context,
@@ -143,41 +142,43 @@ class AC3D_OT_Export:
 
         # TRACE("Global: {0}".format(global_matrix))
 
-        self.ac_mats = [AC3D.Material('DefaultWhite', None, self.export_conf)]
+        self.ac_mats = [AC3D.Material("DefaultWhite", None, self.export_conf)]
         self.ac_world = None
 
         # Parsing the tree in a top down manner and check on the way down which
         # objects are to be exported
 
         self.world = AC3D.World(
-            'Blender_exporter_v' + str(operator.v_info[0]) + "." +
-            str(operator.v_info[1]) + "__" + bpy.path.basename(filepath),
-            self.export_conf)
+            "Blender_exporter_v"
+            + str(operator.v_info[0])
+            + "."
+            + str(operator.v_info[1])
+            + "__"
+            + bpy.path.basename(filepath),
+            self.export_conf,
+        )
         self.parseLevel(
             self.world,
-            [ob for ob in bpy.data.objects
-             if ob.parent is None and not ob.library])
+            [ob for ob in bpy.data.objects if ob.parent is None and not ob.library],
+        )
         self.world.parse(self.ac_mats)
 
         # dump the contents of the lists to file
-        ac_file = open(filepath, 'w')
-        ac_file.write('AC3Db\n')
+        ac_file = open(filepath, "w")
+        ac_file.write("AC3Db\n")
         for ac_mat in self.ac_mats:
             ac_mat.write(ac_file)
 
         self.world.write(ac_file)
         ac_file.close()
 
-    def parseLevel(self,
-                   parent,
-                   objects,
-                   ignore_select=False,
-                   local_transform=Matrix()):
+    def parseLevel(
+        self, parent, objects, ignore_select=False, local_transform=Matrix()
+    ):
         """
         Parse a level in the object hierarchy
         """
         for ob in objects:
-
             ac_ob = None
 
             # Objects from libraries don't have the select flag set even if
@@ -188,52 +189,52 @@ class AC3D_OT_Export:
             if self.export_conf.export_hidden:
                 ob.hide_set(False)
 
-            if (not self.export_conf.use_render_layers or
-                ob.visible_get()) and (#was .is_visible(self.export_conf.context.scene)
-                (not self.export_conf.use_selection or
-                 ob.select_get() or ignore_select)):
+            if (
+                (not self.export_conf.use_render_layers or ob.visible_get())
+                and
+                # was .is_visible(self.export_conf.context.scene)
+                (not self.export_conf.use_selection or ob.select_get() or ignore_select)
+            ):
                 ob.hide_set(hidden)
 
                 # We need to check for dupligroups first as every type of
                 # object can be converted to a dupligroup without removing
                 # the data from the old type.
-                if ob.instance_type == 'GROUP':#was .dupli_type
-                    ac_ob = AC3D.Group(
-                        ob.name, ob, self.export_conf, local_transform)
+                if ob.instance_type == "GROUP":  # was .dupli_type
+                    ac_ob = AC3D.Group(ob.name, ob, self.export_conf, local_transform)
                     children = [
-                        child for child in ob.dupli_group.objects
-                        if not child.parent or
-                        child.parent.name not in ob.dupli_group.objects]
-                    self.parseLevel(ac_ob, children, True,
-                                    local_transform @ ob.matrix_world)
-                elif ob.type in ['MESH', 'LATTICE', 'SURFACE', 'CURVE']:
-                    ac_ob = AC3D.Poly(
-                        ob.name, ob, self.export_conf, local_transform)
-                elif ob.type == 'ARMATURE':
+                        child
+                        for child in ob.dupli_group.objects
+                        if not child.parent
+                        or child.parent.name not in ob.dupli_group.objects
+                    ]
+                    self.parseLevel(
+                        ac_ob, children, True, local_transform @ ob.matrix_world
+                    )
+                elif ob.type in ["MESH", "LATTICE", "SURFACE", "CURVE"]:
+                    ac_ob = AC3D.Poly(ob.name, ob, self.export_conf, local_transform)
+                elif ob.type == "ARMATURE":
                     p = parent
                     for bone in ob.pose.bones:
                         for c in ob.children:
                             if c.parent_bone == bone.name:
                                 ac_child = AC3D.Poly(
-                                    c.name, c,
-                                    self.export_conf, local_transform)
+                                    c.name, c, self.export_conf, local_transform
+                                )
                                 p.addChild(ac_child)
                                 p = ac_child
 
                                 if len(c.children):
                                     self.parseLevel(
-                                        p, c.children,
-                                        ignore_select, local_transform)
+                                        p, c.children, ignore_select, local_transform
+                                    )
                     continue
-                elif ob.type == 'EMPTY':
-                    ac_ob = AC3D.Group(
-                        ob.name, ob, self.export_conf, local_transform)
-                elif ob.type == 'LIGHT' and self.export_conf.export_lights:
-                    ac_ob = AC3D.Light(
-                        ob.name, ob, self.export_conf, local_transform)
+                elif ob.type == "EMPTY":
+                    ac_ob = AC3D.Group(ob.name, ob, self.export_conf, local_transform)
+                elif ob.type == "LIGHT" and self.export_conf.export_lights:
+                    ac_ob = AC3D.Light(ob.name, ob, self.export_conf, local_transform)
                 else:
-                    TRACE('Skipping object {0} (type={1})'.format(
-                        ob.name, ob.type))
+                    TRACE("Skipping object {0} (type={1})".format(ob.name, ob.type))
             ob.hide_set(hidden)
             if ac_ob:
                 parent.addChild(ac_ob)
@@ -244,5 +245,6 @@ class AC3D_OT_Export:
                 next_parent = self.world
 
             if len(ob.children):
-                self.parseLevel(next_parent, ob.children,
-                                ignore_select, local_transform)
+                self.parseLevel(
+                    next_parent, ob.children, ignore_select, local_transform
+                )
