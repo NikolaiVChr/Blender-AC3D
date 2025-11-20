@@ -69,6 +69,7 @@ class ExportConf:
         mircol_as_emis,
         mircol_as_amb,
         amb_as_diff,
+        ambient,
         export_lines,
         export_hidden,
         export_lights,
@@ -84,6 +85,7 @@ class ExportConf:
         self.mircol_as_emis = mircol_as_emis
         self.mircol_as_amb = mircol_as_amb
         self.amb_as_diff = amb_as_diff
+        self.ambient = ambient
         self.crease_angle = crease_angle
         self.merge_materials = merge_materials
         self.export_lines = export_lines
@@ -115,6 +117,7 @@ class AC3D_OT_Export:
         mircol_as_emis=True,
         mircol_as_amb=False,
         amb_as_diff=False,
+        ambient=[0,0,0],
         export_lines=False,
         export_hidden=False,
         export_lights=False,
@@ -134,6 +137,7 @@ class AC3D_OT_Export:
             mircol_as_emis,
             mircol_as_amb,
             amb_as_diff,
+            ambient,
             export_lines,
             export_hidden,
             export_lights,

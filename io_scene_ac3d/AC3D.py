@@ -694,7 +694,7 @@ class Material:
                  export_config=None):
         self.name = name                                # string
         self.rgb = [1.0, 1.0, 1.0]          # [R,G,B]
-        self.amb = [0.8, 0.8, 0.8]          # [R,G,B]
+        self.amb = [0.2, 0.2, 0.2]          # [R,G,B]
         self.emis = [0.0, 0.0, 0.0]         # [R,G,B]
         self.spec = [0.5, 0.5, 0.5]         # [R,G,B]
         self.shi = 64                                       # integer
@@ -799,9 +799,11 @@ class Material:
                 self.trans = 1.0-bl_mat.diffuse_color[3]
                 print( 'Material '+bl_mat.name+' is not using nodes, Emission not exported' )
 
-                
+            print(export_config.amb_as_diff)   
             if export_config.amb_as_diff:
-                self.amb = self.rgb    
+                self.amb = self.rgb
+            else:
+                self.amb = export_config.ambient
                 
             acMin = 0.0
             acMax = 128.0

@@ -312,6 +312,17 @@ class AC3D_OT_Export(Operator, ExportHelper):
         description="Export AC3D ambient colour to be like Diffuse color",
         default=False,
     )
+    
+    ambient: FloatVectorProperty(
+        name="Set amb",
+        description="Ambient color",
+        subtype="COLOR",
+        unit="NONE",
+        default=(0.5, 0.5, 0.5),
+        max=1.0,
+        min=0.0,
+    )
+        
     export_lines: BoolProperty(
         name="Export lines",
         description=(
